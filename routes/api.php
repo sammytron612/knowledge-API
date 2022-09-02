@@ -25,6 +25,11 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 
 
+
 //Route::apiResource('article', [ArticleController::class]);
 
-Route::get('/search/{searchTerm}', [App\Http\Controllers\Api\SearchController::class, 'search']);
+Route::get('/search/{searchTerm}', [App\Http\Controllers\Api\ApiController::class, 'search']);
+
+Route::post('/create', [App\Http\Controllers\Api\ApiController::class, 'create']);
+
+Route::get('/show/{id}', [App\Http\Controllers\Api\ArticleController::class, 'returnBody']);

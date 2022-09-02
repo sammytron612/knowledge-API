@@ -15,7 +15,15 @@ return new class extends Migration
     {
         Schema::create('articles', function (Blueprint $table) {
             $table->id();
-            $table->string('title');;
+            $table->string('slug')->nullable();
+            $table->string('title');
+            $table->string('tags')->nullable();
+            $table->string('scope');
+            $table->string('status');
+            $table->string('kb');
+            $table->integer('author');
+            $table->integer('views')->default(0);
+            $table->integer('section_id');
             $table->timestamps();
         });
     }
