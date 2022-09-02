@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 
 
 use App\Http\Controllers\ArticleController;
+use App\Http\Middleware\BearerToken;
 
 /*
 |--------------------------------------------------------------------------
@@ -23,13 +24,16 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 */
 
-
-
-
 //Route::apiResource('article', [ArticleController::class]);
 
-Route::get('/search/{searchTerm}', [App\Http\Controllers\Api\ApiController::class, 'search']);
+Route::middleware(BearerToken::class)->namespace('\App\Http\Controllers\Api')->group(function(){
 
-Route::post('/create', [App\Http\Controllers\Api\ApiController::class, 'create']);
+    Route::get('/search/{searchTerm}', [App\Http\Controllers\Api\ApiController::class, 'search']);
 
-Route::get('/show/{id}', [App\Http\Controllers\Api\ArticleController::class, 'returnBody']);
+    Route::post('/create', [App\Http\Controllers\Api\ApiController::class, 'create']);
+
+    Route::get('/show/{id}', [App\Http\Controllers\Api\ApiController::class, 'show']);
+
+    Route::get('/show-body/{id}', [App\Http\Controllers\Api\ApiController::class, 'returnBody']);
+});
+

@@ -12,14 +12,18 @@ use App\Models\Uploads;
 
 class ApiController extends Controller
 {
+
     public function search(Request $request)
     {
 
 
-        if($request->bearerToken() !== env('API_TOKEN'))
+     /*   $api_token = $request->bearerToken();
+
+
+        if($api_token !== 'testtoken')
         {
             return response()->json(['error' => 'Unauthenticated.'], 401);
-        }
+        } */
 
         $search = $request->searchTerm;
 
@@ -65,6 +69,39 @@ class ApiController extends Controller
 
 
        return response()->Json(['message' => 'error',200]);
+    }
+
+    public function show(Request $request)
+    {
+
+        $article = Articles::find($request->id);
+
+        return response()->json(
+            ['id' => $article->id,
+            'title' => $article->title,
+            'body' => $article->body->body,
+            'tags' => $article->tags,
+            'author' => $article->author,
+            'kb' => $article->kb,
+            'views' => $article->views,
+            'section' => $article->section->title,
+            'created' => $article->created_at,
+            ]
+        );
+
+    }
+
+    public function returnBody(Request $request)
+    {
+
+        $article = Articles::find($request->id);
+
+        return response()->json(
+            ['id' => $article->id,
+            'title' => $article->title,
+            'body' => $article->body->body,
+            ]);
+
     }
 
     private function saveUploads($uploads, $articleId)
