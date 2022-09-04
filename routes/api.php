@@ -32,7 +32,11 @@ Route::middleware(BearerToken::class)->namespace('\App\Http\Controllers\Api')->g
 
     Route::post('/create', [App\Http\Controllers\Api\ApiController::class, 'create']);
 
+    Route::post('/update', [App\Http\Controllers\Api\ApiController::class, 'update']);
+
     Route::get('/show/{id}', [App\Http\Controllers\Api\ApiController::class, 'show']);
+
+    Route::delete('/delete-attachment/{id}', [App\Http\Controllers\Api\ApiController::class, 'deleteAttachment']);
 
     Route::get('/show-body/{id}', [App\Http\Controllers\Api\ApiController::class, 'returnBody']);
 });

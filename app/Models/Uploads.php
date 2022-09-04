@@ -15,6 +15,6 @@ class Uploads extends Model
 
     public function article()
     {
-        return $this->belongsTo(Article::class,'id','article_id');
+        return $this->belongsTo(Article::class);
     }
 }

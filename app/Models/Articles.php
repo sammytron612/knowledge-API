@@ -23,7 +23,7 @@ class Articles extends Model
 
     public function uploads()
     {
-        return $this->hasMany(Uploads::class,'id','articleid');
+        return $this->hasMany(Uploads::class,'article_id');
     }
 
 }
