@@ -108,6 +108,8 @@ class ApiController extends Controller
     {
 
         $article = Articles::findOrFail($request->id);
+        $article->views ++;
+        $article->save();
 
 
         return response()->json(
