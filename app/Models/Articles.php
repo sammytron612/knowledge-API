@@ -26,4 +26,8 @@ class Articles extends Model
         return $this->hasMany(Uploads::class,'article_id');
     }
 
+    public function sectionTitle() {
+        return $this->section->title;
+}
+
 }

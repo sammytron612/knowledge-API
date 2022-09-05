@@ -9,6 +9,7 @@ use App\Models\ArticleBody;
 use App\Http\Resources\ArticlesCollection;
 use App\Models\Uploads;
 use App\Models\Section;
+use App\Models\Authors;
 
 
 class ApiController extends Controller
@@ -26,24 +27,35 @@ class ApiController extends Controller
             return response()->json(['error' => 'Unauthenticated.'], 401);
         } */
 
+        do a join uery in here to join section
+
         $search = $request->searchTerm;
 
         $a = urldecode($search);
 
-        return new ArticlesCollection(Articles::select('id','title')->where('title','like','%'.$a.'%')->paginate(2));
+        return new ArticlesCollection(Articles::select('id','title','author','scope','status','section','created_at')->where('title','like','%'.$a.'%')->paginate(2));
 
     }
 
     public function create(Request $request)
     {
 
+        $error = false;
+
         $array = ['title' => $request->title,
                 'tags' => $request->tags,
                 'section_id' => $request->section,
                 'scope' => $request->scope,
                 'status' => $request->status,
-                'author' => $request->author
+                'author' => $request->author,
             ];
+
+        if(!Authors::find($reques->author))
+        {
+            $author = Authors::create(['author_id' => $request->author, 'name' => $request->name]);
+
+            if(!$author) {$this->returnError();}
+        }
 
         $article = Articles::create($array);
 
@@ -61,15 +73,16 @@ class ApiController extends Controller
 
             $body = ArticleBody::create(['body' => $request->solution,  'article_id' => $article->id]);
 
-            if($body)
+            if(!$body)
             {
 
-                return response()->Json(['message' => 'success',200]);
+                $this->returnError();
             }
+
+            return response()->Json(['message' => 'success',200]);
         }
 
-
-       return response()->Json(['message' => 'error',500]);
+        $this->returnError();
     }
 
     public function update(Request $request)
@@ -81,6 +94,7 @@ class ApiController extends Controller
                 'status' => $request->status,
 
             ];
+
         $id = $request['id'];
 
         $article = Articles::findorFail($id);
@@ -134,11 +148,16 @@ class ApiController extends Controller
 
         $article = Articles::findOrFail($request->id);
 
-        return response()->json(
-            ['id' => $article->id,
-            'title' => $article->title,
-            'body' => $article->body->body,
-            ]);
+        if($article)
+        {
+            return response()->json(
+                ['id' => $article->id,
+                'title' => $article->title,
+                'body' => $article->body->body,
+                ],200);
+        }
+
+        $this->returnError();
 
     }
 
@@ -151,6 +170,7 @@ class ApiController extends Controller
 
     private function saveUploads($uploads, $articleId)
     {
+        $error = false;
         $uploads = json_decode($uploads, true);
 
         foreach($uploads as $upload)
@@ -160,9 +180,21 @@ class ApiController extends Controller
                     'article_id' => $articleId
 
         ];
-            Uploads::create($array);
+            $uploads = Uploads::create($array);
+            if(!$uploads){$error = true;}
         }
 
-        return;
+        if(!$error){
+            return response()->Json(['message' => 'success',200]);
+        }
+        else{
+            $this->returnError();
+        }
+
+    }
+
+    private function returnError()
+    {
+        return response()->Json(['message' => 'error',500]);
     }
 }

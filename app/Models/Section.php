@@ -15,6 +15,6 @@ class Section extends Model
 
     public function article()
     {
-        return $this->belongsTo(Article::class,'id','section_id');
+        return $this->belongsTo(Articles::class,'section_id','id');
     }
 }
