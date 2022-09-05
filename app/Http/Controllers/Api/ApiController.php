@@ -93,7 +93,6 @@ class ApiController extends Controller
         $articleBody->body = $request->solution;
         $articleBody->save();
 
-
         if($request->uploads)
         {
             $this->saveUploads($request->uploads, $article->id);
