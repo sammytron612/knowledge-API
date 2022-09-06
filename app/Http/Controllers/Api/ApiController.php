@@ -6,10 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Articles;
 use App\Models\ArticleBody;
-use App\Http\Resources\ArticlesCollection;
 use App\Models\Uploads;
-use App\Models\Section;
 use App\Models\Authors;
+use Illuminate\Support\Facades\DB;
+
 
 
 class ApiController extends Controller
@@ -19,21 +19,25 @@ class ApiController extends Controller
     {
 
 
-     /*   $api_token = $request->bearerToken();
-
-
-        if($api_token !== 'testtoken')
-        {
-            return response()->json(['error' => 'Unauthenticated.'], 401);
-        } */
-
-        do a join uery in here to join section
-
         $search = $request->searchTerm;
 
-        $a = urldecode($search);
+        $searchTerm = urldecode($search);
 
-        return new ArticlesCollection(Articles::select('id','title','author','scope','status','section','created_at')->where('title','like','%'.$a.'%')->paginate(2));
+        $articles = DB::table('articles')
+            ->join('authors', 'author', '=', 'authors.author_id')
+            ->join('sections', 'section_id', '=', 'sections.id')
+            ->select('articles.id as id','articles.title as article_title','articles.views as views','articles.created_at','authors.name as author_name', 'articles.kb as kb', 'sections.title as section_title')
+            ->where('articles.status','Published')
+            ->where(function ($query) use($searchTerm)
+            {
+                $query->where('articles.title','like','%'.$searchTerm.'%')
+                      ->orWhere('articles.tags','like','%'.$searchTerm.'%');
+            })
+            ->paginate(20);
+
+        return response()->Json($articles);
+
+        //return new ArticlesCollection($articles);
 
     }
 
@@ -120,9 +124,22 @@ class ApiController extends Controller
     public function show(Request $request)
     {
 
-        $article = Articles::findOrFail($request->id);
+        $article = Articles::with('uploads')->findOrFail($request->id);
         $article->views ++;
         $article->save();
+
+        $articles = DB::table('articles')
+            ->join('authors', 'author', '=', 'authors.author_id')
+            ->join('sections', 'section_id', '=', 'sections.id')
+            ->join('article_bodies','articles.id','=','article_bodies.article_id')
+            ->select('articles.id as id','articles.title as article_title','articles.views as views','articles.tags as tags','articles.created_at','article_bodies.body as body','authors.name as author_name', 'articles.kb as kb', 'articles.scope as scope','articles.status as status','sections.title as section_title')
+            ->where('articles.id',$request->id)
+            ->first();
+
+            return response()->json([$articles,
+                                    'uploads' => $article->uploads
+
+        ]);
 
 
         return response()->json(
