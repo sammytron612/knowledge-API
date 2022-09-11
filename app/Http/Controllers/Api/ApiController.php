@@ -8,12 +8,33 @@ use App\Models\Articles;
 use App\Models\ArticleBody;
 use App\Models\Uploads;
 use App\Models\Authors;
+use App\Http\Resources\Articlescollection;
 use Illuminate\Support\Facades\DB;
+use App\Models\Section;
+use \Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 
 
 class ApiController extends Controller
 {
+    public function inCommentSearch(Request $request)
+    {
+        $search = $request->searchTerm;
+
+        $searchTerm = urldecode($search);
+
+        $articles = Articles::select('id','title')
+                    ->where('scope', 'Public')
+                    ->where( function ($query) use($searchTerm){
+                        $query->where('title','like', '%'.$searchTerm.'%')
+                            ->orWhere('tags','like', '%'.$searchTerm.'%');
+                    })
+                    ->limit(20)->get();
+
+        return response()->json($articles);
+
+    }
 
     public function search(Request $request)
     {
@@ -35,6 +56,7 @@ class ApiController extends Controller
             })
             ->paginate(20);
 
+        return ArticlesCollection::collection($articles);
         return response()->Json($articles);
 
         //return new ArticlesCollection($articles);
@@ -51,10 +73,12 @@ class ApiController extends Controller
                 'section_id' => $request->section,
                 'scope' => $request->scope,
                 'status' => $request->status,
+                'expiry' => $request->expiry,
                 'author' => $request->author,
+
             ];
 
-        if(!Authors::find($reques->author))
+        if(!Authors::find($request->author))
         {
             $author = Authors::create(['author_id' => $request->author, 'name' => $request->name]);
 
@@ -95,6 +119,7 @@ class ApiController extends Controller
                 'tags' => $request->tags,
                 'section_id' => $request->section,
                 'scope' => $request->scope,
+                'expiry' => $request->expiry,
                 'status' => $request->status,
 
             ];
@@ -128,11 +153,13 @@ class ApiController extends Controller
         $article->views ++;
         $article->save();
 
+        ;
+
         $articles = DB::table('articles')
             ->join('authors', 'author', '=', 'authors.author_id')
             ->join('sections', 'section_id', '=', 'sections.id')
             ->join('article_bodies','articles.id','=','article_bodies.article_id')
-            ->select('articles.id as id','articles.title as article_title','articles.views as views','articles.tags as tags','articles.created_at','article_bodies.body as body','authors.name as author_name', 'articles.kb as kb', 'articles.scope as scope','articles.status as status','sections.title as section_title')
+            ->select('articles.id as id','articles.title as article_title','articles.views as views','articles.tags as tags','articles.created_at','article_bodies.body as body','authors.name as author_name', 'articles.author as author_id', 'articles.kb as kb', 'articles.scope as scope', 'articles.expiry as expiry','articles.status as status','articles.expiry as expiry','sections.title as section_title')
             ->where('articles.id',$request->id)
             ->first();
 
@@ -141,24 +168,30 @@ class ApiController extends Controller
 
         ]);
 
-
-        return response()->json(
-            ['id' => $article->id,
-            'title' => $article->title,
-            'body' => $article->body->body,
-            'tags' => $article->tags,
-            'author' => $article->author,
-            'scope' => $article->scope,
-            'status' => $article->status,
-            'kb' => $article->kb,
-            'views' => $article->views,
-            'section' => $article->section->title,
-            'created' => $article->created_at,
-            'uploads' => $article->uploads,
-            ]
-        );
-
     }
+
+    public function showAll(Request $request)
+    {
+        $articles = DB::table('articles')
+            ->join('authors', 'author', '=', 'authors.author_id')
+            ->join('sections', 'section_id', '=', 'sections.id')
+            ->join('article_bodies','articles.id','=','article_bodies.article_id')
+            ->select('articles.id as id','articles.title as article_title','articles.views as views','articles.created_at','authors.name as author_name', 'articles.author as author_id', 'articles.kb as kb', 'articles.scope as scope','articles.status as status','sections.title as section_title')
+            ->paginate(30);
+
+        $expire = Carbon::now()->addMinutes(30);
+
+        $viewed = Cache::remember('viewed', $expire, function() {
+            return Articles::orderBy('views','desc')->limit(5)->get();
+        });
+
+        $recent = Cache::remember('recent', $expire, function() {
+            return Articles::orderBy('created_at','desc')->limit(5)->get();
+        });
+
+            return response()->json(['articles' => $articles,'viewed' => $viewed, 'recent' => $recent],200);
+    }
+
 
     public function returnBody(Request $request)
     {
