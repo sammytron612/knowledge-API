@@ -56,7 +56,7 @@ class ApiController extends Controller
             })
             ->paginate(20);
 
-        return ArticlesCollection::collection($articles);
+
         return response()->Json($articles);
 
         //return new ArticlesCollection($articles);
@@ -159,7 +159,7 @@ class ApiController extends Controller
             ->join('authors', 'author', '=', 'authors.author_id')
             ->join('sections', 'section_id', '=', 'sections.id')
             ->join('article_bodies','articles.id','=','article_bodies.article_id')
-            ->select('articles.id as id','articles.title as article_title','articles.views as views','articles.tags as tags','articles.created_at','article_bodies.body as body','authors.name as author_name', 'articles.author as author_id', 'articles.kb as kb', 'articles.scope as scope', 'articles.expiry as expiry','articles.status as status','articles.expiry as expiry','sections.title as section_title')
+            ->select('articles.id as id','articles.title as article_title','articles.views as views','articles.tags as tags','articles.created_at','article_bodies.body as body','authors.name as author_name', 'articles.author as author_id', 'articles.kb as kb', 'articles.scope as scope', 'articles.expiry as expiry','articles.status as status','articles.expiry as expiry','sections.id as section_id', 'sections.title as section_title')
             ->where('articles.id',$request->id)
             ->first();
 
