@@ -69,6 +69,7 @@ class ApiController extends Controller
         $error = false;
 
         $array = ['title' => $request->title,
+                'slug' => str_replace(" ", "_", $request->title),
                 'tags' => $request->tags,
                 'section_id' => $request->section,
                 'scope' => $request->scope,
@@ -78,14 +79,17 @@ class ApiController extends Controller
 
             ];
 
-        if(!Authors::find($request->author))
+        $exists = Authors::where('author_id', $request->author)->exists();
+        if(!$exists)
         {
-            $author = Authors::create(['author_id' => $request->author, 'name' => $request->name]);
+            $author = Authors::create(['author_id' => $request->author, 'name' => $request->author_name]);
 
             if(!$author) {$this->returnError();}
         }
 
         $article = Articles::create($array);
+
+
 
         if($article)
         {
@@ -173,7 +177,7 @@ class ApiController extends Controller
     public function showAll(Request $request)
     {
         $articles = DB::table('articles')
-            ->join('authors', 'author', '=', 'authors.author_id')
+            ->rightJoin('authors', 'author', '=', 'authors.author_id')
             ->join('sections', 'section_id', '=', 'sections.id')
             ->join('article_bodies','articles.id','=','article_bodies.article_id')
             ->select('articles.id as id','articles.title as article_title','articles.views as views','articles.created_at','authors.name as author_name', 'articles.author as author_id', 'articles.kb as kb', 'articles.scope as scope','articles.status as status','sections.title as section_title')
